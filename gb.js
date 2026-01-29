@@ -1,5 +1,5 @@
 (function() {
-    // 1. Configuração de Estilo e Overlay
+    // 1. Overlay e Interface
     const overlay = document.createElement('div');
     overlay.id = "gb-overlay";
     overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;background:#111;color:#fff;font-family:monospace;display:flex;flex-direction:column;";
@@ -17,24 +17,29 @@
         <div id="game-screen" style="flex-grow:1;display:flex;align-items:center;justify-content:center;background:#000;position:relative;">
             <canvas id="canvas" width="160" height="144" style="width:320px;height:288px;image-rendering:pixelated;background:#8b956d;border:10px solid #333;"></canvas>
             <div id="welcome-msg" style="position:absolute;text-align:center;color:#666;">
-                <p>NENHUMA ROM CARREGADA</p>
-                <p style="font-size:10px;">Clique em "IMPORTAR ROM" para começar</p>
+                <p>AGUARDANDO ROM...</p>
+                <p style="font-size:10px;">Selecione um arquivo .gb</p>
             </div>
         </div>
         <div style="background:#222;padding:10px;font-size:10px;color:#888;text-align:center;">
-            CONTROLES: SETAS (Direcional) | Z (A) | X (B) | ENTER (Start) | SHIFT (Select)
+            SETAS (D-Pad) | Z (A) | X (B) | ENTER (Start) | SHIFT (Select)
         </div>
     `;
     document.body.appendChild(overlay);
 
-    // 2. Carregar a biblioteca do Emulador via JSDelivr
+    // 2. Carregar o script do GitHub via jsDelivr usando o prefixo /gh/
     const script = document.createElement('script');
-    script.src = "https://cdn.jsdelivr.net/npm/gh-juchi-gameboy.js@master/dist/gameboy.js";
+    script.src = "https://cdn.jsdelivr.net/gh/juchi/gameboy.js@master/dist/gameboy.js";
     
     script.onload = () => {
-        console.log("[GB-XSS] Emulador carregado.");
+        console.log("[GB-XSS] Engine carregada via GitHub.");
         initEmulator();
     };
+
+    script.onerror = () => {
+        document.getElementById('welcome-msg').innerText = "ERRO AO CARREGAR ENGINE DO JSDELIVR";
+    };
+
     document.head.appendChild(script);
 
     function initEmulator() {
@@ -42,7 +47,6 @@
         const romInput = document.getElementById('rom-input');
         const welcomeMsg = document.getElementById('welcome-msg');
         
-        // O repositório expõe a classe Gameboy no escopo global
         let gb = null;
 
         romInput.onchange = (e) => {
@@ -51,25 +55,25 @@
 
             const reader = new FileReader();
             reader.onload = (event) => {
-                const arrayBuffer = event.target.result;
-                const romData = new Uint8Array(arrayBuffer);
+                const romData = new Uint8Array(event.target.result);
 
                 try {
-                    // Inicializa ou Reinicia o emulador
-                    if (gb) gb.stop();
+                    // Limpa instância anterior se houver
+                    if (gb) {
+                        gb.pause();
+                    }
                     
                     welcomeMsg.style.display = 'none';
                     
-                    // Instancia o Gameboy passando o canvas e a ROM
-                    // Nota: A estrutura exata depende de como o dist foi gerado, 
-                    // geralmente é: new Gameboy(canvas, romData)
+                    // Inicialização conforme a API do Gameboy.js
+                    // A biblioteca expõe a classe 'Gameboy' globalmente
                     gb = new Gameboy(canvas);
                     gb.loadRom(romData);
                     gb.run();
                     
-                    console.log("[GB-XSS] ROM carregada com sucesso.");
                 } catch (err) {
-                    alert("Erro ao carregar ROM: " + err.message);
+                    console.error(err);
+                    alert("Erro no emulador: " + err.message);
                 }
             };
             reader.readAsArrayBuffer(file);
