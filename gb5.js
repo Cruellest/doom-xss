@@ -6,8 +6,8 @@
     overlay.innerHTML = `
         <div style="background:#333;padding:10px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #444;">
             <div style="display:flex;align-items:center;gap:15px;">
-                <span style="color:#0f0;font-weight:bold;">GAMEBOY_XSS v3.0</span>
-                <label style="background:#444;padding:5px 12px;cursor:pointer;font-size:12px;border-radius:4px;border:1px solid #666;color:#fff;transition:0.2s;">
+                <span style="color:#0f0;font-weight:bold;">GAMEBOY_XSS v4.0</span>
+                <label style="background:#444;padding:5px 12px;cursor:pointer;font-size:12px;border-radius:4px;border:1px solid #666;color:#fff;">
                     📁 IMPORTAR ROM (.GB)
                     <input type="file" id="rom-input" accept=".gb" style="display:none;">
                 </label>
@@ -16,46 +16,49 @@
         </div>
         <div id="game-screen" style="flex-grow:1;display:flex;align-items:center;justify-content:center;background:#000;">
             <canvas id="canvas" width="160" height="144" style="width:320px;height:288px;background:#8b956d;border:10px solid #333;image-rendering:pixelated;"></canvas>
-            <div id="status-msg" style="position:absolute;color:#333;font-weight:bold;">CARREGUE UM ARQUIVO .GB</div>
+            <div id="status-msg" style="position:absolute;color:rgba(0,0,0,0.3);font-weight:bold;pointer-events:none;">INSIRA UMA ROM</div>
         </div>
     `;
     document.body.appendChild(overlay);
 
-    // 2. Carregar a Engine do GitHub
+    // 2. Carregar a Engine
     const script = document.createElement('script');
     script.src = "https://cdn.jsdelivr.net/gh/juchi/gameboy.js@master/dist/gameboy.js";
     
     script.onload = () => {
-        console.log("[GB-XSS] Engine carregada. Configurando hardware...");
-        
-        // Buscamos o construtor correto dentro do namespace 'GameboyJS'
-        // Como vimos no seu console, o objeto global é GameboyJS
-        const GameboyClass = window.GameboyJS && window.GameboyJS.Gameboy 
-                           ? window.GameboyJS.Gameboy 
-                           : window.GameboyJS;
-
-        if (typeof GameboyClass !== 'function') {
-            console.error("[GB-XSS] Classe Gameboy não encontrada dentro de GameboyJS!");
-            return;
-        }
-
-        const canvas = document.getElementById('canvas');
-        const romInput = document.getElementById('rom-input');
+        console.log("[GB-XSS] Engine carregada. Mapeando componentes...");
 
         try {
-            // FIX CRÍTICO: Passamos o canvas E o input para o construtor
-            // A biblioteca vai gerenciar o 'change' do input automaticamente
-            const gb = new GameboyClass(canvas, romInput);
+            // No seu arquivo gameboy.js:
+            // O namespace é window.GameboyJS
+            // O construtor é window.GameboyJS.Gameboy
+            // O leitor é window.GameboyJS.RomFileReader
             
-            console.log("[GB-XSS] Emulador instanciado com sucesso!");
+            const GameboyClass = window.GameboyJS.Gameboy;
+            const RomReaderClass = window.GameboyJS.RomFileReader;
+            
+            const canvas = document.getElementById('canvas');
+            const romInput = document.getElementById('rom-input');
 
-            // Evento visual para remover a mensagem de fundo
+            // Criamos o leitor apontando para o seu input customizado
+            const reader = new RomReaderClass(romInput);
+
+            // Iniciamos o Gameboy passando o leitor nas opções
+            const gb = new GameboyClass(canvas, {
+                romReaders: [reader]
+            });
+
+            console.log("[GB-XSS] Emulador pronto e aguardando arquivo!");
+
+            // Feedback visual quando carregar
             romInput.addEventListener('change', () => {
                 document.getElementById('status-msg').style.display = 'none';
+                // O GameboyJS inicia o jogo automaticamente ao detectar o 'change' no input!
             });
 
         } catch (err) {
-            console.error("[GB-XSS] Erro na instanciação:", err);
+            console.error("[GB-XSS] Erro na montagem:", err);
+            alert("Erro: " + err.message);
         }
     };
 
