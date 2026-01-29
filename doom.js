@@ -1,43 +1,36 @@
 (function() {
-    // 1. Injetar o CSS necessário para o container do jogo
-    var style = document.createElement('style');
-    style.innerHTML = `
-        .dosbox-container { width: 640px; height: 400px; position: relative; background: #000; margin: 20px auto; border: 5px solid #333; }
-        .dosbox-container > .dosbox-overlay { background: url(https://js-dos.com/cdn/DOOM.png); background-size: cover; }
-        #doom-status { color: #0f0; font-family: monospace; text-align: center; }
-    `;
-    document.head.appendChild(style);
+    // 1. Injetar o CSS do js-dos (essencial para o canvas aparecer)
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = "https://cdn.jsdelivr.net/npm/js-dos@6.2.1/dist/js-dos.css";
+    document.head.appendChild(link);
 
-    // 2. Criar a interface do jogo (Canvas e Botão)
+    // 2. Criar a interface
     var container = document.createElement('div');
-    container.style.textAlign = "center";
+    container.style = "position:fixed; bottom:20px; right:20px; z-index:9999; background:#000; border:2px solid #555; padding:10px; box-shadow: 0 0 20px rgba(0,0,0,0.5);";
     container.innerHTML = `
-        <div id="doom-status">Carregando DOOM via XSS...</div>
-        <div id="dosbox" class="dosbox-container"></div>
-        <br/>
-        <button onclick="dosbox.requestFullScreen();" style="padding: 10px 20px; background: #c00; color: #fff; border: none; cursor: pointer; font-weight: bold;">MODO TELA CHEIA</button>
+        <div id="doom-header" style="color:#0f0; font-family:monospace; margin-bottom:5px; font-size:12px;">XSS DOOM Status: <span id="status">Carregando...</span></div>
+        <div id="dosbox" style="width:480px; height:320px;"></div>
+        <button onclick="dosbox.requestFullScreen();" style="width:100%; margin-top:5px; cursor:pointer; background:#333; color:#fff; border:1px solid #777;">TELA CHEIA</button>
     `;
-    
-    // Insere o jogo no final da página para não quebrar a tabela onde o XSS está
     document.body.appendChild(container);
 
-    // 3. Carregar a biblioteca js-dos dinamicamente
-    // Usamos o cdnjs ou jsdelivr porque sua CSP permite esses domínios!
+    // 3. Carregar o Script do js-dos via jsDelivr (permitido pela sua CSP)
     var script = document.createElement('script');
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/js-dos/6.2.1/js-dos.js";
+    script.src = "https://cdn.jsdelivr.net/npm/js-dos@6.2.1/dist/js-dos.js";
     
     script.onload = function() {
-        document.getElementById('doom-status').innerText = "Iniciando MS-DOS...";
+        document.getElementById('status').innerText = "Iniciando motor DOS...";
         
-        // 4. Inicializar o DOOM
-        // Nota: Se a sua CSP for muito restrita, o download do .jsdos pode ser bloqueado.
+        // Inicializa o jogo
+        // Se a CSP bloquear o download do .jsdos, o erro aparecerá no console como 'connect-src'
         Dos(document.getElementById("dosbox")).run("https://js-dos.com/DOOM/DOOM.jsdos");
         
-        document.getElementById('doom-status').innerText = "DOOM PRONTO! Clique no jogo para jogar.";
+        document.getElementById('status').innerText = "RODANDO!";
     };
 
     script.onerror = function() {
-        document.getElementById('doom-status').innerText = "Erro ao carregar biblioteca js-dos. Verifique a CSP.";
+        document.getElementById('status').innerText = "Erro no carregamento do JS!";
     };
 
     document.head.appendChild(script);
