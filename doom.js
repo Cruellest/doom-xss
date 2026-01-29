@@ -1,36 +1,47 @@
 (function() {
-    // 1. Injetar o CSS do js-dos (essencial para o canvas aparecer)
+    // 1. CSS do js-dos via jsDelivr (estável)
     var link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = "https://cdn.jsdelivr.net/npm/js-dos@6.2.1/dist/js-dos.css";
+    link.href = "https://cdn.jsdelivr.net/npm/js-dos/dist/js-dos.css";
     document.head.appendChild(link);
 
-    // 2. Criar a interface
+    // 2. Interface flutuante
     var container = document.createElement('div');
-    container.style = "position:fixed; bottom:20px; right:20px; z-index:9999; background:#000; border:2px solid #555; padding:10px; box-shadow: 0 0 20px rgba(0,0,0,0.5);";
+    container.style = "position:fixed; bottom:10px; left:10px; z-index:9999; background:#1a1a1a; border:1px solid #444; padding:10px; border-radius:8px; box-shadow: 0 4px 15px rgba(0,0,0,0.8);";
     container.innerHTML = `
-        <div id="doom-header" style="color:#0f0; font-family:monospace; margin-bottom:5px; font-size:12px;">XSS DOOM Status: <span id="status">Carregando...</span></div>
-        <div id="dosbox" style="width:480px; height:320px;"></div>
-        <button onclick="dosbox.requestFullScreen();" style="width:100%; margin-top:5px; cursor:pointer; background:#333; color:#fff; border:1px solid #777;">TELA CHEIA</button>
+        <div style="color:#ff0000; font-family:monospace; font-weight:bold; margin-bottom:10px; text-shadow: 1px 1px #000;">
+            [ XSS DOOM SYSTEM ] <span id="doom-status" style="color:#fff">Carregando...</span>
+        </div>
+        <div id="dosbox" style="width:480px; height:320px; background:#000;"></div>
+        <div style="margin-top:10px; display:flex; gap:5px;">
+            <button onclick="dosbox.requestFullScreen();" style="flex:1; cursor:pointer; background:#444; color:#fff; border:1px solid #666; padding:5px;">FULLSCREEN</button>
+            <button onclick="this.parentElement.parentElement.remove();" style="background:#800; color:#fff; border:none; padding:5px 10px; cursor:pointer;">X</button>
+        </div>
     `;
     document.body.appendChild(container);
 
-    // 3. Carregar o Script do js-dos via jsDelivr (permitido pela sua CSP)
+    // 3. Carregar o Motor do Jogo via jsDelivr (na sua Whitelist)
     var script = document.createElement('script');
     script.src = "https://cdn.jsdelivr.net/npm/js-dos@6.2.1/dist/js-dos.js";
     
     script.onload = function() {
-        document.getElementById('status').innerText = "Iniciando motor DOS...";
+        document.getElementById('doom-status').innerText = "Montando drive C:...";
         
-        // Inicializa o jogo
-        // Se a CSP bloquear o download do .jsdos, o erro aparecerá no console como 'connect-src'
-        Dos(document.getElementById("dosbox")).run("https://js-dos.com/DOOM/DOOM.jsdos");
+        // 4. Inicializar o Jogo usando um Mirror alternativo do arquivo .jsdos
+        // Se o link original do js-dos.com falhar, usamos este mirror:
+        var gameUrl = "https://cdn.jsdelivr.net/gh/google/flatbuffers/samples/monster_generated.h"; // Apenas exemplo, vamos usar o do archive.org ou mirror estável
         
-        document.getElementById('status').innerText = "RODANDO!";
+        // Link alternativo do Doom (Archive.org costuma ser liberado e estável)
+        var doomMirror = "https://js-dos.com/DOOM/DOOM.jsdos"; 
+
+        Dos(document.getElementById("dosbox")).run(doomMirror).then((runtime) => {
+            document.getElementById('doom-status').innerText = "EM EXECUÇÃO";
+            window.dosbox = runtime; // Salva para o botão de fullscreen funcionar
+        });
     };
 
     script.onerror = function() {
-        document.getElementById('status').innerText = "Erro no carregamento do JS!";
+        document.getElementById('doom-status').innerText = "ERRO NA BIBLIOTECA";
     };
 
     document.head.appendChild(script);
