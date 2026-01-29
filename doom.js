@@ -7,7 +7,7 @@
 
     // 2. Carregar a biblioteca js-dos (Motor do jogo)
     var jsdos = document.createElement('script');
-    jsdos.src = "https://cdn.jsdelivr.net/npm/js-dos@6.2.1/dist/js-dos.js";
+    jsdos.src = "https://cdn.jsdelivr.net/npm/js-dos/dist/js-dos.js";
     document.head.appendChild(jsdos);
 
     // 3. Criar o container principal (estilo Modal para não quebrar o site)
